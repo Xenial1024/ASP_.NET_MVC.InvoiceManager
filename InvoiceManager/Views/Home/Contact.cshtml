@@ -1,0 +1,31 @@
+﻿@model ContactViewModel
+
+<div class="sub-page">
+    <h1 class="page-title">@Model.Title</h1>
+
+    <div class="contact-container">
+        <div class="contact-info">
+            <div class="contact-card">
+                <h2>📞📧 Dane kontaktowe</h2>
+                <div class="contact-details">
+                    @Html.Raw(Model.Addresses)
+                </div>
+            </div>
+
+            <div class="contact-card">
+                <h2>ℹ️🏢 Informacje o biurze</h2>
+                <div class="office-details">
+                    @Html.Raw(Model.OfficeInfo)
+                </div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div class="contact-card">
+                <h2>📍🗺️ Jak do nas dotrzeć</h2>
+                <img src="../../Content/Images/map.png" alt="biuro na mapie" class="map" />
+                @Html.Raw(Model.RouteInfo)
+            </div>
+        </div>
+    </div>
+</div>

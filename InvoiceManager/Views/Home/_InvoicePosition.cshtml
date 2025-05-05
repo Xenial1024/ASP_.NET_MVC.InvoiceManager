@@ -1,0 +1,56 @@
+﻿@model IEnumerable<InvoiceManager.Models.Domains.InvoicePosition>
+
+<div class="row">
+    <h2>Pozycje faktury</h2>
+
+    <table class="table table-hover table-striped mt-3 mb-5">
+        <thead>
+            <tr>
+                <th scope="col">Lp</th>
+                <th scope="col">Produkt</th>
+                <th scope="col">Ilość</th>
+                <th scope="col">Wartość</th>
+                <th scope="col"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var position in Model)
+            {
+                <tr>
+                    <td>
+                        <a class="font-weight-bold"
+                           href="@Url.Action("InvoicePosition", "Home",
+                                new
+                                {
+                                    invoiceId = position.InvoiceId,
+                                    invoicePositionId = position.Id
+                                })">
+                            @position.Lp
+                        </a>
+                    </td>
+                    <td>@position.Product.Name</td>
+                    <td>@position.Quantity</td>
+                    <td>@position.Value zł</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm"
+                                onclick="deleteInvoicePosition('@position.Id', '@position.InvoiceId', this)">
+                            Usuń
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(() => {
+            $.extend($.validator.messages, {
+                required: "To pole jest wymagane.",
+                number: "Proszę wprowadzić poprawną liczbę."
+            });
+            $.validator.methods.number = (value, element) => this.optional(element) || /^[0-9]+(?:[.,][0-9]{0,2})?$/.test(value);
+        });
+    </script>
+}
+

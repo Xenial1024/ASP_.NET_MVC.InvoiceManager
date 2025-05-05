@@ -1,0 +1,11 @@
+﻿@model InvoiceManager.Models.IndexViewModel
+@{
+    ViewBag.Title = "Zarządzanie kontem";
+}
+
+<h2>@ViewBag.Title</h2>
+<br/>
+<br/>
+<div>
+    @Html.ActionLink("Zmień hasło", "ChangePassword", null, new { @class = "btn btn-primary btn-lg py-2 px-4" })
+</div>

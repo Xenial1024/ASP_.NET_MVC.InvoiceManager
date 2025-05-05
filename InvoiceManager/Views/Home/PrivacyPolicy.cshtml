@@ -1,0 +1,8 @@
+﻿@model InvoiceManager.Models.PrivacyPolicyViewModel
+<div class="sub-page">
+    <h1 class="page-title">@Model.Title</h1>
+    <div class="profile-description" style="line-height: 0.4;">
+        <p>@Html.Raw(Model.Description.Replace("\n", "<br />"))</p>
+    </div>
+    <link href="../../Content/Site.css" rel="stylesheet">
+</div>

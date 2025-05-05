@@ -1,0 +1,185 @@
+﻿@model InvoiceManager.Models.EditInvoicePositionViewModel
+
+@{
+    ViewBag.Title = Model.Heading;
+}
+@section Styles {
+    <link href="~/Content/Site.css" rel="stylesheet" />
+}
+<h1>@Model.Heading</h1>
+
+@using (Html.BeginForm("SaveInvoicePosition", "Home", FormMethod.Post, new { @class = "form" }))
+
+
+{
+    @Html.AntiForgeryToken()
+
+    if (Model.InvoicePosition.Id == 0)
+    {
+        <p class="alert alert-info mt-4 mb-4">
+            Pola "produkt" oraz "ilość" są
+            <strong>wymagane</strong>.
+        </p>
+    }
+    @Html.ValidationSummary(true, "")
+    @Html.HiddenFor(x => x.InvoicePosition.Id)
+    @Html.HiddenFor(x => x.InvoicePosition.InvoiceId)
+    @Html.HiddenFor(x => x.InvoicePosition.Lp)
+
+
+    <div class="form-group">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            @Html.LabelFor(x => x.InvoicePosition.ProductId)
+            <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
+                    onclick="toggleProductForm()">
+                Nowy produkt
+            </button>
+        </div>
+        <div class="form-group position-relative">
+            @Html.DropDownListFor(x => x.InvoicePosition.ProductId,
+                new SelectList(Model.Products, "Id", "Name"),
+                "-- Wybierz produkt --",
+                new { @class = "form-control", autofocus = "autofocus" })
+            <div class="position-absolute" style="top: 0; right: 0; bottom: 0; width: 40px; pointer-events: none; display: flex; align-items: center; justify-content: center;">
+                <i class="fa fa-chevron-down"></i>
+            </div>
+            @Html.ValidationMessageFor(x => x.InvoicePosition.ProductId)
+        </div>
+        <div id="newProductSection" style="display: none;" class="card p-3 mt-2">
+            <h5>Nowy produkt</h5>
+
+            <div id="productErrorMessage" class="alert alert-danger" style="display: none;"></div>
+
+            <div class="form-group">
+                <label for="Name">Nazwa produktu:</label>
+                <input type="text" id="Name" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="Email">Cena produktu:</label>
+                <input type="text" id="Value" class="form-control" />
+            </div>
+            <div class="form-group">
+                <button type="button" class="btn btn-success" onclick="saveNewProduct()">
+                    Zapisz produkt
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="toggleProductForm()">
+                    Anuluj
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(x => x.InvoicePosition.Quantity)
+        @Html.TextBoxFor(x => x.InvoicePosition.Quantity,
+        new { @class = "form-control" })
+        @Html.ValidationMessageFor(x => x.InvoicePosition.Quantity)
+    </div>
+
+    if (Model.InvoicePosition.Id != 0)
+    {
+        <div class="form-group">
+            @Html.LabelFor(x => x.InvoicePosition.Value)
+            @Html.TextBoxFor(x => x.InvoicePosition.Value,
+                new { @class = "form-control", @readonly = "readonly" })
+        </div>
+    }
+
+    <button class="btn btn-primary btn-lg mb-5" type="submit">
+        Zapisz
+    </button>
+}
+
+@section Scripts
+{
+    <script type="text/javascript">
+
+        const toggleProductForm = () => {
+            let newProductSection = document.getElementById('newProductSection');
+
+            newProductSection.style.display === 'none' ? newProductSection.style.display = 'block' : newProductSection.style.display = 'none';
+        }
+
+        const saveNewProduct = () => {
+            let name = $('#Name').val();
+            let value = $('#Value').val();
+
+            if (!name || name.trim() === '') {
+                $('#productErrorMessage').text('Nazwa produktu jest wymagana.').show();
+                return;
+            }
+
+            if (!value || value.trim() === '') {
+                $('#productErrorMessage').text('Cena produktu jest wymagana.').show();
+                return;
+            }
+
+            $('#productErrorMessage').hide();
+
+            $.ajax({
+                type: 'POST',
+                url: "@Url.Action("AddProduct", "Home")",
+                data: {
+                    Name: name,
+                    Value: value
+                },
+                success: (data) => {
+                    if (data.Success) {
+                        $('#productErrorMessage').hide();
+
+                        // Dodaj nowy produkt do listy rozwijanej
+                        $('#InvoicePosition_ProductId').append($('<option>', {
+                            value: data.ProductId,
+                            text: name
+                        }));
+
+                        $('#InvoicePosition_ProductId').val(data.ProductId);
+                        toggleProductForm();
+
+                        $('#Name, #Value').val('');
+                    } else
+                        $('#productErrorMessage').text(data.Message).show();
+                },
+                error: (xhr, status, error) => {
+                    console.error('Błąd AJAX:', xhr.responseText);
+                    $('#productErrorMessage').text('Wystąpił błąd podczas dodawania produktu.').show();
+                },
+                dataType: 'json'
+            });
+        }
+
+        $(document).ready(() => {
+            $.validator.methods.number = (value, element) => this.optional(element) || /^-?(?:[0-9]+|[0-9]{1,3}(?:[\s\.,][0-9]{3})+)(?:[\.,][0-9]+)?$/.test(value);
+        });
+
+        $(document).ready(function() {
+        $('#InvoicePosition_ProductId').change(function() {
+            updatePrice();
+        });
+
+        $('#InvoicePosition_Quantity').change(function() {
+            updatePrice();
+        });
+
+        function updatePrice() {
+            const productId = $('#InvoicePosition_ProductId').val();
+            const quantity = $('#InvoicePosition_Quantity').val();
+
+            if (productId && quantity) {
+                $.ajax({
+                    type: 'GET',
+                    url: '@Url.Action("GetProductPrice", "Home")',
+                    data: { productId: productId },
+                    success: function(data) {
+                        if (data.Success) {
+                            const value = data.Price * quantity;
+                            $('#InvoicePosition_Value').val(value.toFixed(2));
+                        }
+                    }
+                });
+            }
+        }
+    });
+    </script>
+}
+
+

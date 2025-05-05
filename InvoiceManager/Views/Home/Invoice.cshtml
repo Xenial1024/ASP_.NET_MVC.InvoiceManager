@@ -1,0 +1,505 @@
+﻿@using Microsoft.AspNet.Identity;
+
+@model InvoiceManager.Models.EditInvoiceViewModel
+@section Styles {
+    <link href="~/Content/Site.css" rel="stylesheet" />
+}
+
+@{
+    ViewBag.Title = Model.Heading;
+}
+<h1 class="mb-3">@Model.Heading</h1>
+
+@if (Model.Invoice.Id != 0)
+{
+    <button class="btn btn-primary mb-3"
+            onclick='window.location.href="@Url.Action("InvoicePosition", "Home", new { invoiceId = Model.Invoice.Id })"'>
+        ➕ Dodaj pozycję
+    </button>
+
+    <button class="btn btn-secondary mb-3" onclick="generatePdf()">
+        📄 Generuj PDF
+    </button>
+
+    <button class="btn btn-secondary mb-3" onclick="printInvoice()">
+        🖨️ Drukuj
+    </button>
+}
+
+<div class="row">
+
+    <div class="col-lg-6">
+        @using (Html.BeginForm("Invoice", "Home", FormMethod.Post, new { @class = "form" }))
+        {
+            @Html.AntiForgeryToken()
+
+            if (Model.Invoice.Id == 0)
+            {
+                <p class="alert alert-info mt-4 mb-4">
+                    Pola tytuł, klient i sposób płatności są
+                    <strong>wymagane</strong>.
+                </p>
+            }
+            @Html.ValidationSummary(true, "")
+            @Html.HiddenFor(x => x.Invoice.Id)
+            @Html.HiddenFor(x => x.Invoice.UserId)
+
+            <div class="form-group">
+                @Html.LabelFor(x => x.Invoice.Title)
+                @Html.TextBoxFor(x => x.Invoice.Title, new { @class = "form-control", autofocus = "autofocus" })
+                @Html.ValidationMessageFor(m => m.Invoice.Title, "")
+            </div>
+
+            <div class="form-group">
+                <div class="d-flex justify-content-between align-items-end mb-2">
+                    @Html.LabelFor(x => x.Invoice.ClientId)
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
+                            onclick="toggleClientForm()">
+                        Nowy klient
+                    </button>
+                </div>
+                <div id="existingClientSection">
+                    <div class="position-relative">
+                        @Html.DropDownListFor(x => x.Invoice.ClientId,
+                            new SelectList(Model.Clients, "Id", "Name"),
+                            "-- Wybierz klienta --",
+                            new { @class = "form-control pr-5" })
+                        @Html.ValidationMessageFor(m => m.Invoice.ClientId, "")
+                        <div class="position-absolute" style="top: 0; right: 0; bottom: 0; width: 40px; pointer-events: none; display: flex; align-items: center; justify-content: center;">
+                            <i class="fa fa-chevron-down"></i>
+                        </div>
+                    </div>
+                </div>
+                <div id="newClientSection" style="display: none;" class="card p-3 mt-2">
+                    <h5>Nowy klient</h5>
+                    <div class="form-group">
+                        <label for="Name">Nazwa:</label>
+                        <input type="text" id="Name" class="form-control" />
+                        <span id="NameError" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="Email">Email:</label>
+                        <input type="text" id="Email" class="form-control" />
+                        <span id="EmailError" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="PostalCode">Kod pocztowy:</label>
+                        <input type="text" id="Address.PostalCode" class="form-control" />
+                        <span id="PostalCodeError" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="City">Miejscowość:</label>
+                        <input type="text" id="Address.City" class="form-control" />
+                        <span id="CityError" class="text-danger"></span>
+                    </div>
+                    @Html.Partial("_StreetTypeSelector")
+                    <div class="form-group">
+                        <label for="Street" id="streetLabel">Ulica:</label>
+                        <input type="text" id="Address.Street" class="form-control" />
+                        <span id="StreetError" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="HouseOrApartmentNumber">Numer domu lub mieszkania:</label>
+                        <input type="text" id="Address.HouseOrApartmentNumber" class="form-control" />
+                        <span id="HouseOrApartmentNumberError" class="text-danger"></span>
+                    </div>
+                    <div class="form-group mt-2">
+                        <button type="button" class="btn btn-success" onclick="saveNewClient()">
+                            Zapisz klienta
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="toggleClientForm()">
+                            Anuluj
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            if (Model.Invoice.Id != 0)
+            {
+                <div class="form-group">
+                    @Html.LabelFor(x => x.Invoice.Value)
+                    @Html.TextBoxFor(x => x.Invoice.Value, new { @class = "form-control", @readonly = "readonly" })
+                    @Html.ValidationMessageFor(m => m.Invoice.Value, "")
+                </div>
+            }
+
+            <div class="form-group">
+                @Html.LabelFor(x => x.Invoice.MethodOfPaymentId)
+                <div class="position-relative">
+                    @Html.DropDownListFor(x => x.Invoice.MethodOfPaymentId,
+                        new SelectList(Model.MethodsOfPayment, "Id", "Name"),
+                        "-- Wybierz sposób płatności --",
+                        new { @class = "form-control pr-5" })
+                    @Html.ValidationMessageFor(m => m.Invoice.MethodOfPaymentId, "")
+                    <div class="position-absolute" style="top: 0; right: 0; bottom: 0; width: 40px; pointer-events: none; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa fa-chevron-down"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                @Html.LabelFor(x => x.Invoice.PaymentDate)
+                <div class="input-group">
+                    @Html.TextBoxFor(x => x.Invoice.PaymentDate, "{0:dd-MM-yyyy}",
+                        new
+                        {
+                            @class = "form-control",
+                            @id = "PaymentDate",
+                            data_val = "true",
+                        })
+                    <div class="input-group-append">
+                        <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                    </div>
+                </div>
+            </div>
+            @Html.ValidationMessageFor(m => m.Invoice.PaymentDate, "")
+
+            <div class="form-group">
+                @Html.LabelFor(x => x.Invoice.Comments)
+                @Html.TextAreaFor(x => x.Invoice.Comments, new { @class = "form-control" })
+            </div>
+
+            <button class="btn btn-primary btn-lg mb-5 mt-2" type="submit">
+                Zapisz
+            </button>
+        }
+    </div>
+
+    <div class="col-5 offset-lg-1">
+        @if (Model.Invoice.Id != 0)
+        {
+            @Html.Partial("_InvoicePosition", Model.Invoice.InvoicePositions)
+        }
+    </div>
+
+</div>
+
+@Scripts.Render("~/bundles/jquery")
+@Scripts.Render("~/bundles/jqueryval")
+
+<script type="text/javascript">
+    $.validator.addMethod("paymentDateValid", function(value, element) {
+    const createdDate = new Date('@Model.Invoice.CreatedDate.ToString("yyyy-MM-dd")');
+
+    const parts = value.split('-');
+    if (parts.length !== 3) return false;
+
+    // miesiące w JavaScript są indeksowane od 0, dlatego odejmujemy 1
+    const paymentDate = new Date(parts[2], parts[1] - 1, parts[0]);
+
+    return paymentDate >= createdDate;
+}, "Termin płatności nie może być wcześniejszy niż data sprzedaży.");
+
+    $(document).ready(function () {
+        $("#PaymentDate").rules("add", {
+            paymentDateValid: true
+        });
+    });
+
+    const generatePdf = () => {
+        if (!@Model.Invoice.InvoicePositions.Count) {
+            alert('Dodaj co najmniej 1 pozycję do faktury żeby móc ją wygenerować.');
+            return;
+        }
+
+        const invoiceTitle = encodeURIComponent('@Model.Invoice.Title');
+
+        $.ajax({
+            type: 'POST',
+            url: "@Url.Action("InvoiceToPdf", "Print")",
+            data: {
+                id: '@Model.Invoice.Id',
+                title: invoiceTitle
+            },
+            success: (data) => window.location = `@Url.Action("DownloadInvoicePdf", "Print")?fileGuid=${data.FileGuid}&fileName=${data.FileName}`,
+            error: (xhr, status, error) => {
+                console.error("Błąd generowania PDF:", xhr.responseText);
+                alert("Nie udało się wygenerować faktury PDF.");
+            },
+            dataType: 'json',
+            cache: false
+        });
+    }
+
+    const printInvoice = () => {
+        if (!@Model.Invoice.InvoicePositions.Count) {
+            alert('Dodaj co najmniej 1 pozycję do faktury żeby móc ją wydrukować.');
+            return;
+        }
+
+        const invoiceUrl = '@Url.Action("PrintInvoice", "Print")?id=@Model.Invoice.Id',
+              target = '_blank',
+              windowSize = 'width=800,height=580';
+
+        window.open(invoiceUrl, target, windowSize);
+    }
+
+    const deleteInvoicePosition = (id, invoiceId, btn) => {
+        if (!confirm("Czy na pewno chcesz usunąć pozycję?"))
+            return;
+
+        $.ajax({
+            type: 'POST',
+            url: "@Url.Action("DeletePosition", "Home")",
+            data: {
+                id: id,
+                invoiceId: invoiceId
+            },
+            success: (data) => {
+                if (data.Success) {
+                    let row = btn.parentNode.parentNode;
+                    row.parentNode.removeChild(row);
+
+                    $('#Invoice_Value').val(data.InvoiceValue.toFixed(2).replace(".", ","));
+
+                    if (!row.parentNode.rows || row.parentNode.rows.length <= 1)
+                        location.reload();
+                }
+                else
+                    alert(data.Message);
+            },
+            error: (xhr) => {
+                console.error("Błąd podczas usuwania pozycji:", xhr.responseText);
+                alert("Wystąpił błąd podczas usuwania pozycji faktury.");
+            },
+            dataType: 'json'
+        });
+    }
+
+    const toggleClientForm = () => {
+        let newClientSection = document.getElementById('newClientSection');
+        let existingClientSection = document.getElementById('existingClientSection');
+
+        if (newClientSection.style.display === 'none') {
+            newClientSection.style.display = 'block';
+            existingClientSection.style.display = 'none';
+        } else {
+            newClientSection.style.display = 'none';
+            existingClientSection.style.display = 'block';
+        }
+    }
+
+    const handleValidationErrors = errorMessage => {
+        if (errorMessage.includes("Email jest nieprawidłowy") || errorMessage.includes("email jest nieprawidłowy")) {
+            $('#Email').addClass('is-invalid');
+            $('#EmailError').text('Podany adres email jest nieprawidłowy!').show();
+        } else if (errorMessage.includes("Nazwa klienta")) {
+            $('#Name').addClass('is-invalid');
+            $('#NameError').text(errorMessage).show();
+        } else if (errorMessage.includes("Kod pocztowy")) {
+            $('#Address\\.PostalCode').addClass('is-invalid');
+            $('#PostalCodeError').text(errorMessage).show();
+        } else if (errorMessage.includes("miejscowości")) {
+            $('#Address\\.City').addClass('is-invalid');
+            $('#CityError').text(errorMessage).show();
+        } else if (errorMessage.includes("ulicy")) {
+            $('#Address\\.Street').addClass('is-invalid');
+            $('#StreetError').text(errorMessage).show();
+        } else if (errorMessage.includes("Numer domu")) {
+            $('#Address\\.HouseOrApartmentNumber').addClass('is-invalid');
+            $('#HouseOrApartmentNumberError').text(errorMessage).show();
+        } else
+            // Jeśli nie rozpoznano konkretnego pola, wyświetl ogólny komunikat
+            $('#formErrorMessage').text(errorMessage).show();
+    }
+
+    const clearValidationErrors = () => {
+        $('#NameError, #EmailError, #PostalCodeError, #CityError, #StreetError, #HouseOrApartmentNumberError, #formErrorMessage').text('').hide();
+        $('#Name, #Email, #Address\\.PostalCode, #Address\\.City, #Address\\.Street, #Address\\.HouseOrApartmentNumber').removeClass('is-invalid');
+    }
+
+    const saveNewClient = () => {
+        clearValidationErrors();
+
+        let name = $('#Name').val();
+        let email = $('#Email').val();
+        let postalCode = $('#Address\\.PostalCode').val();
+        let city = $('#Address\\.City').val();
+        let streetType = $('#Address\\.StreetType').val();
+        let street = $('#Address\\.Street').val();
+        let houseOrApartmentNumber = $('#Address\\.HouseOrApartmentNumber').val();
+        let hasErrors = false;
+
+        if (!name.trim()) {
+            $('#Name').addClass('is-invalid');
+            $('#NameError').text('Nazwa klienta jest wymagana.').show();
+            hasErrors = true;
+        } else if (name.length > 128) {
+            $('#Name').addClass('is-invalid');
+            $('#NameError').text('Nazwa jest zbyt długa (maksymalnie 128 znaków).').show();
+            hasErrors = true;
+        }
+
+        if (!email.trim()) {
+            $('#Email').addClass('is-invalid');
+            $('#EmailError').text('Email jest wymagany!').show();
+            hasErrors = true;
+        } else if (email.length > 254) {
+            $('#Email').addClass('is-invalid');
+            $('#EmailError').text('Adres email jest zbyt długi (maksymalnie 254 znaki).').show();
+            hasErrors = true;
+        } else if (!validator.isEmail(email)) {
+            $('#Email').addClass('is-invalid');
+            $('#EmailError').text('Podany adres email jest nieprawidłowy.').show();
+            hasErrors = true;
+        }
+
+        if (!postalCode.trim()) {
+            $('#Address\\.PostalCode').addClass('is-invalid');
+            $('#PostalCodeError').text('Kod pocztowy jest wymagany.').show();
+            hasErrors = true;
+        } else {
+            const postalCodeRegex = /^[0-9]{2}-[0-9]{3}$/;
+            if (!postalCodeRegex.test(postalCode)) {
+                $('#Address\\.PostalCode').addClass('is-invalid');
+                $('#PostalCodeError').text('Kod pocztowy jest nieprawidłowy.').show();
+                hasErrors = true;
+            }
+        }
+
+        if (!city.trim()) {
+            $('#Address\\.City').addClass('is-invalid');
+            $('#CityError').text('Nazwa miejscowości jest wymagana.').show();
+            hasErrors = true;
+        } else if (city.length > 60) {
+            $('#Address\\.City').addClass('is-invalid');
+            $('#CityError').text('Nazwa miejscowości jest za długa.').show();
+            hasErrors = true;
+        }
+
+        if (!street.trim()) {
+            $('#Address\\.Street').addClass('is-invalid');
+            $('#StreetError').text('Nazwa ulicy jest wymagana.').show();
+            hasErrors = true;
+        } else if (street.length > 90) {
+            $('#Address\\.Street').addClass('is-invalid');
+            $('#StreetError').text('Nazwa ulicy jest za długa.').show();
+            hasErrors = true;
+        }
+
+        if (!houseOrApartmentNumber.trim()) {
+            $('#Address\\.HouseOrApartmentNumber').addClass('is-invalid');
+            $('#HouseOrApartmentNumberError').text('Numer domu / mieszkania jest wymagany.').show();
+            hasErrors = true;
+        } else if (houseOrApartmentNumber === '0') {
+            $('#Address\\.HouseOrApartmentNumber').addClass('is-invalid');
+            $('#HouseOrApartmentNumberError').text('Numer domu / mieszkania nie może być równy 0.').show();
+            hasErrors = true;
+        } else if (houseOrApartmentNumber.length > 15) {
+            $('#Address\\.HouseOrApartmentNumber').addClass('is-invalid');
+            $('#HouseOrApartmentNumberError').text('Numer domu / mieszkania jest zbyt długi.').show();
+            hasErrors = true;
+        }
+
+        if (hasErrors)
+            return;
+
+        $.ajax({
+            type: 'POST',
+            url: "@Url.Action("AddClient", "Home")",
+            data: {
+                Name: name,
+                Email: email,
+                UserId: "@User.Identity.GetUserId()",
+                Address: {
+                    PostalCode: postalCode,
+                    City: city,
+                    StreetType: streetType,
+                    Street: street,
+                    HouseOrApartmentNumber: houseOrApartmentNumber
+                }
+            },
+            success: (data) => {
+                if (data.Success) {
+                    // Dodaj nowego klienta do listy rozwijanej
+                    $('#Invoice_ClientId').append($('<option>', {
+                        value: data.ClientId,
+                        text: name
+                    }));
+
+                    $('#Invoice_ClientId').val(data.ClientId);
+                    toggleClientForm();
+                    $('#Name, #Email, #Address\\.PostalCode, #Address\\.City, #Address\\.Street, #Address\\.HouseOrApartmentNumber').val('');
+                    $('#Address\\.StreetType').val('ul.');
+                } else {
+                    console.error("Server returned error:", data.Message);
+                    handleValidationErrors(data.Message);
+                }
+            },
+            error: (data) => alert('Wystąpił błąd podczas dodawania klienta. Szczegóły: ' + JSON.stringify(data)),
+            dataType: 'json'
+        });
+    }
+
+    $(document).ready(() => {
+        const streetTypeSelect = document.getElementById("Address.StreetType");
+        const streetLabel = document.getElementById("streetLabel");
+
+        if (streetTypeSelect && streetLabel) {
+            updateStreetLabel(streetTypeSelect, streetLabel);
+            streetTypeSelect.addEventListener("change", function () {
+                updateStreetLabel(streetTypeSelect, streetLabel);
+            });
+        }
+
+        $.extend($.validator.messages, {
+            required: "To pole jest wymagane.",
+            number: "Proszę wprowadzić poprawną liczbę."
+        });
+
+        $.validator.methods.number = function (value, element) {
+            return this.optional(element) || /^[0-9]+(?:[.,][0-9]{0,2})?$/.test(value);
+        };
+
+        $.validator.addMethod("polishDate", function (value, element) {
+            return this.optional(element) || /^(0[1-9]|[12][0-9]|3[01])-(0[13578]|1[02])-([0-9]{4})$|^(0[1-9]|[12][0-9]|30)-(0[469]|11)-([0-9]{4})$|^(0[1-9]|1[0-9]|2[0-8])-02-([0-9]{4})$|^(29)-02-((19|20)(0[48]|[2468][048]|[13579][26]))$/.test(value);
+        });
+
+        $.validator.methods.date = (value, element) => this.optional(element) || $.validator.methods.polishDate(value, element);
+
+        if (typeof Litepicker !== 'undefined') {
+            const picker = new Litepicker({
+                element: document.getElementById('PaymentDate'),
+                format: 'DD-MM-YYYY',
+                lang: 'pl-PL',
+                autoRefresh: true,
+                showTooltip: true,
+                buttonText: {
+                    previousMonth: '<i class="fa fa-chevron-left"></i>',
+                    nextMonth: '<i class="fa fa-chevron-right"></i>'
+                }
+            });
+
+            // Dodaj obsługę kliknięcia w ikonę kalendarza
+            const calendarIcon = document.querySelector('.input-group-text');
+            if (calendarIcon)
+                calendarIcon.addEventListener('click', () => picker.show());
+
+            const styleElement = document.createElement('style');
+            styleElement.textContent = `
+                .litepicker {
+                    font-weight: bold !important;
+                    font-size: 17px !important;
+                }
+                .litepicker .container__months .month-item-header .month-item-year {
+                    font-weight: bold !important;
+                }
+            `;
+            document.head.appendChild(styleElement);
+        }
+        else
+            console.error("Litepicker nie jest załadowany. Upewnij się, że biblioteka jest dołączona do strony.");
+
+        // Obsługa usuwania komunikatów o błędach po naprawieniu tekstu
+        $('#Name, #Email, #Address\\.PostalCode, #Address\\.City, #Address\\.Street, #Address\\.HouseOrApartmentNumber').on('input', function () {
+            const fieldId = $(this).attr('id');
+            $(this).removeClass('is-invalid');
+
+            // Konwersja ID pola na ID komunikatu błędu, np. "Name" -> "NameError"
+            const errorId = fieldId.replace(/\./g, '\\.') + 'Error';
+            $('#' + errorId).text('').hide();
+        });
+    });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/validator/13.7.0/validator.min.js"></script>
+<script src="~/Scripts/updateStreetLabel.js"></script>

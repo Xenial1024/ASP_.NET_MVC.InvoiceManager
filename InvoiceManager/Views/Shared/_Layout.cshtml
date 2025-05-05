@@ -1,0 +1,102 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - Zarządzanie Fakturami</title>
+    @Styles.Render("~/Content/css")
+    @Scripts.Render("~/bundles/modernizr")
+    @RenderSection("Styles", required: false)
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+    <!-- Moment.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/locale/pl.js"></script>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.1/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
+    <!-- dateTimePicker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/litepicker/dist/css/litepicker.css" />
+    <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/litepicker.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/litepicker/dist/plugins/mobilefriendly.js"></script>
+    <!-- Font Awesome (dla ikon) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top mb-5">
+
+        <div class="container">
+            <a class="btn btn-dark mx-1 py-2" href="@Url.Action("Index", "Home")">Strona główna</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="btn btn-dark mx-1 py-0">
+                        @Html.ActionLink("O mnie", "About", "Home", null, new { @class = "nav-link text-white" })
+                    </li>
+                    <li class="btn btn-dark mx-1 py-0">
+                        @Html.ActionLink("Kontakt", "Contact", "Home", null, new { @class = "nav-link text-white" })
+                    </li>
+                    <li class="btn btn-dark mx-1 py-0">
+                        @Html.ActionLink("Polityka prywatności", "PrivacyPolicy", "Home", null, new { @class = "nav-link text-white" })
+                    </li>
+                    <li class="btn btn-dark mx-1 py-0">
+                        @Html.ActionLink("Rzuć wyjątek", "ThrowException", "Home", null, new { @class = "nav-link text-white" })
+                    </li>
+                    <li class="btn btn-dark mx-1 py-0">
+                        @Html.ActionLink("Wywołaj błąd 404", "abc123", "Home", null, new { @class = "nav-link text-white" })
+                    </li>
+
+                </ul>
+                <ul class="navbar-nav ms-auto">
+
+                    @Html.Partial("_LoginPartial")
+                </ul>
+            </div>
+        </div>
+
+    </nav>
+
+    <div class="container body-content">
+        @RenderBody()
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; @DateTime.Now.Year - Zarządzanie Fakturami</p>
+        </div>
+    </footer>
+
+    @Scripts.Render("~/bundles/jqueryval")
+
+    @if (ViewBag.IsPdf != true)
+    {
+        <div class="privacy-policy-info" style="display: none;">
+            <span class="cookie-icon">🍪</span>
+            Korzystając ze strony wyrażasz zgodę na wykorzystanie przez serwis plików cookies.
+            <a href="/Home/PrivacyPolicy">Dowiedz się więcej</a>
+            <button onclick="closePrivacyPolicy()" type="button" class="btn btn-light btn-sm mx-3 my-1 privacy-policy-btn">Ok, rozumiem</button>
+        </div>
+    }
+
+    <script>
+        const closePrivacyPolicy = () => {
+            $('.privacy-policy-info').css("display", "none");
+            $.cookie("privacyPolicy", "1", { path: '/', expires: 365 });
+        }
+
+        $(document).ready(() => {
+            if ($.cookie("privacyPolicy") !== "1")
+                $('.privacy-policy-info').css("display", "");
+        });
+    </script>
+
+    @RenderSection("scripts", required: false)
+</body>
+</html>

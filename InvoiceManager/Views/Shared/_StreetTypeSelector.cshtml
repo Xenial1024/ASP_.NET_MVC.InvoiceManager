@@ -1,0 +1,37 @@
+﻿<div class="form-group">
+    <label for="Address_StreetType" class="col-md-2 control-label">Typ ulicy:</label>
+    <div class="col-md-10">
+        <div class="position-relative">
+            <select id="Address.StreetType" name="Address.StreetType" class="form-control">
+                <option value="ul.">ulica</option>
+                <option value="al.">aleja</option>
+                <option value="pl.">plac</option>
+                <option value="skwer">skwer</option>
+                <option value="bulwar">bulwar</option>
+                <option value="rondo">rondo</option>
+                <option value="park">park</option>
+                <option value="rynek">rynek</option>
+                <option value="szosa">szosa</option>
+                <option value="droga">droga</option>
+                <option value="os.">osiedle</option>
+                <option value="ogród">ogród</option>
+                <option value="wyspa">wyspa</option>
+                <option value="wybrzeże">wybrzeże</option>
+            </select>
+            <div class="position-absolute" style="top: 0; right: 0; bottom: 0; width: 40px; pointer-events: none; display: flex; align-items: center; justify-content: center;">
+                <i class="fa fa-chevron-down"></i>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    #newClientSection .form-group > .col-md-10,
+    #newClientSection .form-group > .col-md-2 {
+        width: 100%;
+        max-width: 100%;
+        flex: 0 0 100%;
+        margin-left: 0;
+        padding-left: 0;
+        padding-right: 0;
+    }
+</style>

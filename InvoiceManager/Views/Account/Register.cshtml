@@ -1,0 +1,132 @@
+﻿@model InvoiceManager.Models.RegisterViewModel
+@{
+    ViewBag.Title = "Zarejestruj się";
+}
+@section Styles {
+    <link href="~/Content/Site.css" rel="stylesheet" />
+}
+
+<div class="form-group ms-3">
+    <h2>@ViewBag.Title</h2>
+    <p>
+        @Html.ActionLink("Masz już konto? Zaloguj się", "Login")
+    </p>
+</div>
+
+@using (Html.BeginForm("Register", "Account", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+{
+    @Html.AntiForgeryToken()
+    <hr />
+    @Html.ValidationSummary(true, "")
+    <div class="form-group">
+        @Html.LabelFor(m => m.Name, new { @class = "col-md-2 control-label" })
+        <div class="col-md-10">
+            @Html.TextBoxFor(m => m.Name, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.Name, "")
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.Email, new { @class = "col-md-2 control-label" })
+        <div class="col-md-10">
+            @Html.TextBoxFor(m => m.Email, new { @class = "form-control", autocomplete = "off" })
+            @Html.ValidationMessageFor(m => m.Email, "")
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.Password, new { @class = "col-md-2 control-label" })
+        <div class="col-md-10">
+            @Html.PasswordFor(m => m.Password, new { @class = "form-control", autocomplete = "new-password" })
+            @Html.ValidationMessageFor(m => m.Password, "")
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.ConfirmPassword, new { @class = "col-md-2 control-label" })
+        <div class="col-md-10">
+            @Html.PasswordFor(m => m.ConfirmPassword, new { @class = "form-control", autocomplete = "new-password" })
+            @Html.ValidationMessageFor(m => m.ConfirmPassword, "")
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.Address.PostalCode, new { @class = "col-md-2 control-label" })
+        <div class="col-md-10">
+            @Html.TextBoxFor(m => m.Address.PostalCode, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.Address.PostalCode, "")
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.Address.City, new { @class = "col-md-2 control-label" })
+        <div class="col-md-10">
+            @Html.TextBoxFor(m => m.Address.City, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.Address.City, "")
+        </div>
+    </div>
+    @Html.Partial("_StreetTypeSelector")
+    <div class="form-group">
+        @Html.LabelFor(m => m.Address.Street, new { @class = "col-md-2 control-label" })
+        <div class="col-md-10">
+            @Html.TextBoxFor(m => m.Address.Street, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.Address.Street, "")
+        </div>
+    </div>
+    <div class="form-group">
+        @Html.LabelFor(m => m.Address.HouseOrApartmentNumber, new { @class = "col-md-2 control-label" })
+        <div class="col-md-10">
+            @Html.TextBoxFor(m => m.Address.HouseOrApartmentNumber, new { @class = "form-control" })
+            @Html.ValidationMessageFor(m => m.Address.HouseOrApartmentNumber, "")
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-10">
+            <input type="submit" class="btn btn-dark" value="Zarejestruj" />
+        </div>
+    </div>
+}
+
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/validator/13.7.0/validator.min.js"></script>
+    <script src="~/Scripts/updateStreetLabel.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const streetTypeSelect = document.querySelector('select[name="Address.StreetType"]');
+            const streetLabel = document.querySelector('label[for="Address_Street"]');
+            const name = document.getElementById('Name');
+            const email = document.getElementById('Email');
+
+
+            if (streetTypeSelect && streetLabel) {
+                updateStreetLabel(streetTypeSelect, streetLabel);
+                streetTypeSelect.addEventListener("change", function () {
+                    updateStreetLabel(streetTypeSelect, streetLabel);
+                });
+            }
+
+            if (name)
+                name.addEventListener('blur', function () {
+                    if (this.value.length > 128) {
+                        this.setCustomValidity('Nazwa jest zbyt długa (maksymalnie 128 znaków).');
+                        this.classList.add('input-validation-error');
+                    } else {
+                        this.setCustomValidity('');
+                        this.classList.remove('input-validation-error');
+                    }
+                });
+
+            if (email)
+                email.addEventListener('blur', function () {
+                    if (this.value.length > 254) {
+                        this.setCustomValidity('Adres email jest zbyt długi (maksymalnie 254 znaki).');
+                        this.classList.add('input-validation-error');
+                    } else if (!validator.isEmail(this.value)) {
+                        this.setCustomValidity('Adres email jest nieprawidłowy.');
+                        this.classList.add('input-validation-error');
+                    } else {
+                        this.setCustomValidity('');
+                        this.classList.remove('input-validation-error');
+                    }
+                });
+        });
+    </script>
+}

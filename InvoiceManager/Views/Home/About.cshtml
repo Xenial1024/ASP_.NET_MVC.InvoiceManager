@@ -1,0 +1,13 @@
+﻿@model InvoiceManager.Models.AboutViewModel
+<div class="sub-page">
+    <h1 class="page-title">@Model.Title</h1>
+    <div class="two-rows-container">
+        <div class="profile-photo">
+            <img src="../../Content/Images/face.png" alt="zdjęcie twarzy" class="profile-photo" />
+        </div>
+        <div class="profile-description">
+            <p>@Html.Raw(Model.Description.Replace("\n", "<br />"))</p>
+        </div>
+    </div>
+    <link href="../../Content/Site.css" rel="stylesheet">
+</div>
