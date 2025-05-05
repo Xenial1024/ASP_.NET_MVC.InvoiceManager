@@ -13,7 +13,7 @@ using System.Web.Mvc;
 namespace InvoiceManager.Controllers
 {
     [Authorize]
-    public class AccountController : Controller
+    public partial class AccountController : Controller
     {
         private ApplicationSignInManager _signInManager;
         private ApplicationUserManager _userManager;
@@ -253,27 +253,6 @@ namespace InvoiceManager.Controllers
                 return Redirect(returnUrl);
 
             return RedirectToAction("Index", "Home");
-        }
-
-        internal class ChallengeResult(string provider, string redirectUri, string userId) : HttpUnauthorizedResult
-        {
-            public ChallengeResult(string provider, string redirectUri)
-                : this(provider, redirectUri, null)
-            {
-            }
-
-            public string LoginProvider { get; set; } = provider;
-            public string RedirectUri { get; set; } = redirectUri;
-            public string UserId { get; set; } = userId;
-
-            public override void ExecuteResult(ControllerContext context)
-            {
-                var properties = new AuthenticationProperties { RedirectUri = RedirectUri };
-                if (UserId != null)
-                    properties.Dictionary[XsrfKey] = UserId;
-
-                context.HttpContext.GetOwinContext().Authentication.Challenge(properties, LoginProvider);
-            }
         }
         #endregion
     }
