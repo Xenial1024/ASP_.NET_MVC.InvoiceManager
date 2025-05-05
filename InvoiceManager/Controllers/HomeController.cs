@@ -80,7 +80,6 @@ namespace InvoiceManager.Controllers
                 _invoiceRepository.GetInvoicePosition(invoicePositionId, userId);
 
             var vm = PrepareInvoicePositionVm(invoicePosition);
-
             return View(vm);
         }
 
@@ -183,8 +182,7 @@ namespace InvoiceManager.Controllers
                 if (invoicePosition.InvoiceId <= 0)
                 {
                     ModelState.AddModelError("", "Nieprawidłowy identyfikator faktury");
-                    var vm = PrepareInvoicePositionVm(invoicePosition);
-                    return View("InvoicePosition", vm);
+                    return ReturnToInvoicePosition(invoicePosition);
                 }
 
                 if (ModelState["InvoicePosition.Quantity"]?.Errors.Count > 0)
@@ -198,8 +196,7 @@ namespace InvoiceManager.Controllers
                 if (product == null)
                 {
                     ModelState.AddModelError("InvoicePosition.ProductId", "Wybrany produkt nie istnieje");
-                    var vm = PrepareInvoicePositionVm(invoicePosition);
-                    return View("InvoicePosition", vm);
+                    return ReturnToInvoicePosition(invoicePosition);
                 }
 
                 invoicePosition.Value = invoicePosition.Quantity * product.Value;
@@ -210,8 +207,7 @@ namespace InvoiceManager.Controllers
                 if (!ModelState.IsValid)
                 {
                     _logger.Error($"ModelState errors: {string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage))}");
-                    var vm = PrepareInvoicePositionVm(invoicePosition);
-                    return View("InvoicePosition", vm);
+                    return ReturnToInvoicePosition(invoicePosition);
                 }
 
                 Invoice invoice;
@@ -223,8 +219,7 @@ namespace InvoiceManager.Controllers
                 {
                     _logger.Error($"Nie można pobrać faktury: {ex.Message}");
                     ModelState.AddModelError("", "Nie znaleziono faktury.");
-                    var vm = PrepareInvoicePositionVm(invoicePosition);
-                    return View("InvoicePosition", vm);
+                    return ReturnToInvoicePosition(invoicePosition);
                 }
 
                 decimal currentTotalValue = invoice.InvoicePositions?.Sum(p => p.Id != invoicePosition.Id ? p.Value : 0) ?? 0;
@@ -233,8 +228,7 @@ namespace InvoiceManager.Controllers
                 if (newTotalValue > 9999999999999999.99m)
                 {
                     ModelState.AddModelError("", "Suma cen wszystkich pozycji faktury jest zbyt duża. Maksymalna dozwolona wartość to 9999999999999999.99.");
-                    var vm = PrepareInvoicePositionVm(invoicePosition);
-                    return View("InvoicePosition", vm);
+                    return ReturnToInvoicePosition(invoicePosition);
                 }
 
                 if (invoicePosition.Id == 0) // Dodawanie nowej pozycji
@@ -249,8 +243,7 @@ namespace InvoiceManager.Controllers
                         if (updatedTotalValue > 9999999999999999.99m)
                         {
                             ModelState.AddModelError("", "Suma cen wszystkich pozycji faktury jest zbyt duża. Maksymalna dozwolona wartość to 9999999999999999.99.");
-                            var vm = PrepareInvoicePositionVm(invoicePosition);
-                            return View("InvoicePosition", vm);
+                            return ReturnToInvoicePosition(invoicePosition);
                         }
                         existingPosition.Quantity = updatedQuantity;
                         existingPosition.Value = updatedValue;
@@ -274,16 +267,14 @@ namespace InvoiceManager.Controllers
                     if (originalPosition == null)
                     {
                         ModelState.AddModelError("", "Nie znaleziono pozycji faktury.");
-                        var vm = PrepareInvoicePositionVm(invoicePosition);
-                        return View("InvoicePosition", vm);
+                        return ReturnToInvoicePosition(invoicePosition);
                     }
 
                     decimal updatedTotalValue = currentTotalValue - originalPosition.Value + invoicePosition.Value;
                     if (updatedTotalValue > 9999999999999999.99m)
                     {
                         ModelState.AddModelError("", "Suma cen wszystkich pozycji faktury jest zbyt duża. Maksymalna dozwolona wartość to 9999999999999999.99.");
-                        var vm = PrepareInvoicePositionVm(invoicePosition);
-                        return View("InvoicePosition", vm);
+                        return ReturnToInvoicePosition(invoicePosition);
                     }
 
                     originalPosition.ProductId = invoicePosition.ProductId;
@@ -314,8 +305,7 @@ namespace InvoiceManager.Controllers
                         ? "Suma cen wszystkich pozycji faktury jest zbyt duża. Maksymalna dozwolona wartość to 9999999999999999.99."
                         : "Wystąpił błąd podczas dodawania pozycji faktury.");
 
-                var vm = PrepareInvoicePositionVm(invoicePosition);
-                return View("InvoicePosition", vm);
+                return ReturnToInvoicePosition(invoicePosition);
             }
         }
 
@@ -367,9 +357,6 @@ namespace InvoiceManager.Controllers
             {
                 string currentUserId = User.Identity.GetUserId();
                 client.UserId = User.Identity.GetUserId();
-
-
-                client.Address ??= new Address();
 
                 if (client.Address == null)
                 {
@@ -551,6 +538,12 @@ namespace InvoiceManager.Controllers
         {
             PrivacyPolicyViewModel vm = new();
             return View(vm);
+        }
+
+        private ActionResult ReturnToInvoicePosition(InvoicePosition invoicePosition)
+        {
+            var vm = PrepareInvoicePositionVm(invoicePosition);
+            return View("InvoicePosition", vm);
         }
 
         [AllowAnonymous]
