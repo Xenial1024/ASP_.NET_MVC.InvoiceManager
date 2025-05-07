@@ -208,8 +208,7 @@
             type: 'POST',
             url: "@Url.Action("InvoiceToPdf", "Print")",
             data: {
-                id: '@Model.Invoice.Id',
-                title: invoiceTitle
+                id: '@Model.Invoice.Id'
             },
             success: (data) => window.location = `@Url.Action("DownloadInvoicePdf", "Print")?fileGuid=${data.FileGuid}&fileName=${data.FileName}`,
             error: (xhr, status, error) => {
