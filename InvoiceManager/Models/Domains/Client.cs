@@ -17,6 +17,7 @@ namespace InvoiceManager.Models.Domains
 
         [Required]
         [StringLength(254, ErrorMessage = "Adres email jest zbyt długi.")]
+        [EmailAddress(ErrorMessage = "Podany adres email jest nieprawidłowy.")]
         public string Email { get; set; }
 
         [Required]

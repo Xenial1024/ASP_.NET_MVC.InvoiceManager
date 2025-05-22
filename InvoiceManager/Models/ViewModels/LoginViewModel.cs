@@ -7,7 +7,7 @@ namespace InvoiceManager.Models
         [Required(ErrorMessage = "Pole Email jest wymagane.")]
         [Display(Name = "Email")]
         [StringLength(254)]
-        [EmailAddress]
+        [EmailAddress(ErrorMessage = "Podany adres email jest nieprawidłowy.")]
         public string Email { get; set; }
 
         [Required(ErrorMessage = "Pole Hasło jest wymagane.")]

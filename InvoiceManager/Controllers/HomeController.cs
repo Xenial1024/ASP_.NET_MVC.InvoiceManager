@@ -376,10 +376,6 @@ namespace InvoiceManager.Controllers
                 if (client.Email.Length > 254)
                     return Json(new { Success = false, Message = "Adres email jest zbyt długi (maksymalnie 254 znaki)." });
 
-                Regex emailRegex = new(@"^[^\s@]+@[^\s@]+\.[^\s@]+$");
-                if (!emailRegex.IsMatch(client.Email))
-                    return Json(new { Success = false, Message = "Podany adres email jest nieprawidłowy." });
-
                 if (string.IsNullOrWhiteSpace(client.Address.HouseOrApartmentNumber))
                     return Json(new { Success = false, Message = "Numer domu / mieszkania jest wymagany." });
 

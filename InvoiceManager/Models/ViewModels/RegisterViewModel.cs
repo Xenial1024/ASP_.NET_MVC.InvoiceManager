@@ -13,8 +13,7 @@ namespace InvoiceManager.Models
 
         [Required(ErrorMessage = "Pole Email jest wymagane.")]
         [StringLength(254, ErrorMessage = "Adres email jest zbyt długi (maksymalnie 254 znaki).")]
-        [RegularExpression(@"^[^\s@]+@[^\s@]+\.[^\s@]+$",
-        ErrorMessage = "Podany adres email jest nieprawidłowy.")]
+        [EmailAddress(ErrorMessage = "Podany adres email jest nieprawidłowy.")]
         [Display(Name = "Email")]
         public string Email { get; set; }
 

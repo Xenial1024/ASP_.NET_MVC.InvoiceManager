@@ -115,14 +115,9 @@ namespace InvoiceManager.Controllers
             {
                 if (ModelState.IsValid)
                 {
-                    Regex emailRegex = new(@"^[^\s@]+@[^\s@]+\.[^\s@]+$"),
-                        postalCodeRegex = new(@"^[0-9]{2}-[0-9]{3}$");
+                    Regex postalCodeRegex = new(@"^[0-9]{2}-[0-9]{3}$");
 
-                    bool isEmailValid = emailRegex.IsMatch(model.Email),
-                        isPostalCodeValid = postalCodeRegex.IsMatch(model.Address.PostalCode);
-
-                    if (!isEmailValid)
-                        return View(model);
+                    bool isPostalCodeValid = postalCodeRegex.IsMatch(model.Address.PostalCode);
 
                     if (!isPostalCodeValid)
                         ModelState.AddModelError("Address.PostalCode", "Podany kod pocztowy jest nieprawidłowy.");
